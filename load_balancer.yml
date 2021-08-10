@@ -1,0 +1,66 @@
+- hosts: lb
+  vars_files:
+          - "./vars/vars.yml"
+  tasks:
+          - name: "Install haproxy"
+            package:
+                    name: "haproxy"
+                    state: present
+
+          - name: "Configure haproxy"
+            template:
+                    src: "./template/haproxy.cfg"
+                    dest: "/etc/haproxy/haproxy.cfg"
+            register: lb_conf
+
+          - name: "Restart Service"
+            service:
+                    name: "haproxy"
+                    state: restarted
+            when: lb_conf.changed == true
+
+          - name: "Start Services"
+            service:
+                    name: "haproxy"
+                    state: started
+
+- hosts: web
+  vars_files:
+          - "./vars/vars.yml"
+  tasks:
+          - name: "Install httpd"
+            package:
+                    name: "httpd"
+                    state: present
+
+          - name: "Install php"
+            package:
+                    name: "php"
+                    state: present
+
+          - name: "Configure the httpd"
+            template:
+                    src: "./template/gaurav.conf"
+                    dest: "/etc/httpd/conf.d/gaurav.conf"
+            register: web_conf
+
+          - name: "Create folder"
+            file:
+                    state: directory
+                    path: "{{ doc_root }}"
+
+          - name: "Restart Services"
+            service:
+                    name: "httpd"
+                    state: restarted
+            when: web_conf.changed == true
+
+          - name: "Start services"
+            service:
+                    name: "httpd"
+                    state: started
+
+          - name: "Copy the web pages"
+            copy:
+                    src: "./copy/index.php"
+                    dest: "{{ doc_root }}/index.php"

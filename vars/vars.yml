@@ -1,0 +1,3 @@
+doc_root: "/var/www/gaurav"
+web_port: 81
+lb_port: 8081
